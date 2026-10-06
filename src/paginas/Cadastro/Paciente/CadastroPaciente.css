@@ -1,4 +1,4 @@
-.login {
+.cadastro {
   padding: 24px;
   background-color: #f4fbfb;
   min-height: 100vh;
@@ -8,56 +8,44 @@
   box-sizing: border-box;
 }
 
-.login-topo {
+.cadastro-topo {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-bottom: 24px;
 }
 
-.login-topo-titulo {
+.cadastro-topo h1,
+.cadastro-topo-titulo {
   font-size: 18px;
   color: #0b1e2d;
   font-weight: 600;
 }
 
-.login-boas-vindas {
-  margin-bottom: 28px;
+.cadastro-boas-vindas {
+  margin-bottom: 24px;
 }
 
-.login-boas-vindas h2 {
+.cadastro-boas-vindas h2 {
   font-size: 26px;
   color: #0b1e2d;
   margin-bottom: 8px;
   font-weight: 700;
 }
 
-.login-boas-vindas p {
+.cadastro-boas-vindas p {
   font-size: 14px;
   color: #64748b;
 }
 
-.login-form {
+.cadastro-form {
   display: flex;
   flex-direction: column;
   gap: 16px;
   flex: 1;
 }
 
-.login-esqueci {
-  background: none;
-  border: none;
-  color: #00bcd4;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: left;
-  cursor: pointer;
-  padding: 0;
-  margin-top: -4px;
-  margin-bottom: 8px;
-}
-
-.login-cadastro {
+.cadastro-login-link {
   margin-top: auto;
   text-align: center;
   padding: 24px 0;
@@ -68,7 +56,7 @@
   gap: 4px;
 }
 
-.login-cadastro button {
+.cadastro-login-link button {
   background: none;
   border: none;
   color: #00bcd4;
