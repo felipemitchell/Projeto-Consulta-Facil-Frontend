@@ -23,7 +23,7 @@ O escopo implementado no código inclui:
 - tela de boas-vindas, cadastro de paciente e login único (e-mail e senha) para os três perfis;
 - área do paciente: pré-triagem orientativa, agendamento de consultas, lista de agendamentos, detalhes, reagendamento, cancelamento, histórico, notificações e perfil;
 - área do profissional: início, agenda (calendário mensal e lista do dia), consultas, cadastro de horários disponíveis, notificações e perfil;
-- área do administrador: início com totais e atividade recente, exportação de relatório em CSV, gerenciamento de clínicas, de profissionais (com disponibilidade semanal) e de especialidades;
+- área do administrador: início com totais e atividade recente, exportação de relatório em planilha .xlsx, gerenciamento de clínicas, de profissionais (com disponibilidade semanal) e de especialidades;
 - preferências de acessibilidade (letras maiores e alto contraste), salvas no aparelho;
 - menu em abas inferiores no celular e menu lateral no desktop;
 - instalação como aplicativo (PWA) com manifesto e service worker;
@@ -44,6 +44,7 @@ Versões conforme `package.json`.
 | Integração React com Vite | `@vitejs/plugin-react` | `^4.3.4` |
 | PWA (manifesto e service worker) | `vite-plugin-pwa` | `^2.0.0` |
 | Fonte | `@fontsource/plus-jakarta-sans` | `^5.1.0` |
+| Geração de planilha (.xlsx) | `fflate` | `0.8.2` |
 | Linguagem | JavaScript (módulos ES e JSX) | n/a |
 | Estilos | CSS puro, um arquivo por componente e um global com variáveis | n/a |
 | Comunicação com a API | `fetch` nativo | n/a |
@@ -236,7 +237,7 @@ O identificador abaixo é o valor de `telaAtual` em `App.jsx`.
 
 | Tela | Identificador | Função |
 |---|---|---|
-| Início | `inicio-admin` | Totais de clínicas, profissionais, especialidades e usuários, atividade recente e exportação de relatório CSV por período |
+| Início | `inicio-admin` | Totais de clínicas, profissionais, especialidades e usuários, atividade recente e exportação de relatório em planilha .xlsx por período |
 | Clínicas | `clinicas-admin` | Listar, cadastrar, editar, ativar e desativar |
 | Equipe | `equipe-admin` | Listar, cadastrar e editar profissionais (com senha de acesso), ativar e desativar, e definir disponibilidade em grade semanal |
 | Especialidades | `especialidades-admin` | Listar, cadastrar, editar, ativar e desativar |
@@ -286,7 +287,7 @@ A API não oferece estas rotas, então o front-end as implementa por conta próp
 | Reagendamento | Cria o novo agendamento e, em seguida, cancela o antigo. Se a criação falhar, nada muda |
 | Notificações (paciente e profissional) | Geradas no navegador a partir dos agendamentos; o estado "lida" fica no `localStorage` |
 | Preferências de acessibilidade | Guardadas no `localStorage` (`consultaFacil:preferencias`) |
-| Relatório CSV | Gerado no navegador a partir da lista de agendamentos, com separador `;` e proteção contra injeção de fórmulas |
+| Relatório (.xlsx) | Gerado no navegador (biblioteca `fflate`) a partir da lista de agendamentos. Formato .xlsx evita acentos quebrados no celular e as células são texto puro, sem execução de fórmulas |
 | Disponibilidade semanal do profissional | A API guarda disponibilidade por data. A grade Seg a Sáb cria um registro em cada data correspondente nas próximas 4 semanas (`HORIZONTE_DIAS`) |
 | Troca de senha do paciente | Confere a senha atual fazendo login e depois envia a nova por `PUT /pacientes/{id}` |
 
@@ -342,7 +343,7 @@ O token JWT tem validade configurada no back-end (8 horas por padrão, segundo a
 - Na versão do back-end analisada, apenas as rotas de administradores e `/auth/perfil` exigem autenticação. As demais rotas (pacientes, clínicas, profissionais, especialidades, disponibilidades e agendamentos) respondem sem token. Esse ponto deve ser tratado no back-end.
 - O token não é gravado no `localStorage`, o que reduz a exposição a scripts maliciosos, ao custo de exigir novo login após recarregar a página.
 - O React escapa o conteúdo exibido por padrão e o código não usa `dangerouslySetInnerHTML`.
-- Os relatórios CSV neutralizam células que começam com caracteres de fórmula.
+- O relatório .xlsx grava as células como texto, então valores que começam com `=`, `+`, `-` ou `@` não são executados como fórmula.
 
 ---
 
@@ -433,7 +434,7 @@ The scope implemented in the code includes:
 - welcome screen, patient sign-up and a single login (e-mail and password) for the three profiles;
 - patient area: guidance-only pre-triage, appointment booking, appointment list, details, rescheduling, cancellation, history, notifications and profile;
 - professional area: home, schedule (monthly calendar and daily list), appointments, availability management, notifications and profile;
-- administrator area: home with totals and recent activity, CSV report export, management of clinics, professionals (with weekly availability) and specialties;
+- administrator area: home with totals and recent activity, report export as an .xlsx spreadsheet, management of clinics, professionals (with weekly availability) and specialties;
 - accessibility preferences (larger text and high contrast), saved on the device;
 - bottom tab navigation on mobile and a side menu on desktop;
 - installation as an app (PWA) with a manifest and a service worker;
@@ -454,6 +455,7 @@ Versions according to `package.json`.
 | React integration for Vite | `@vitejs/plugin-react` | `^4.3.4` |
 | PWA (manifest and service worker) | `vite-plugin-pwa` | `^2.0.0` |
 | Font | `@fontsource/plus-jakarta-sans` | `^5.1.0` |
+| Spreadsheet (.xlsx) generation | `fflate` | `0.8.2` |
 | Language | JavaScript (ES modules and JSX) | n/a |
 | Styling | Plain CSS, one file per component plus a global file with variables | n/a |
 | API communication | Native `fetch` | n/a |
@@ -646,7 +648,7 @@ The identifier below is the value of `telaAtual` in `App.jsx`.
 
 | Screen | Identifier | Purpose |
 |---|---|---|
-| Home | `inicio-admin` | Totals of clinics, professionals, specialties and users, recent activity and CSV report export by period |
+| Home | `inicio-admin` | Totals of clinics, professionals, specialties and users, recent activity and report export as an .xlsx spreadsheet by period |
 | Clinics | `clinicas-admin` | List, create, edit, activate and deactivate |
 | Team | `equipe-admin` | List, create and edit professionals (with an access password), activate and deactivate, and set availability in a weekly grid |
 | Specialties | `especialidades-admin` | List, create, edit, activate and deactivate |
@@ -696,7 +698,7 @@ The API does not offer these routes, so the front end implements them itself:
 | Rescheduling | Creates the new appointment and then cancels the old one. If creation fails, nothing changes |
 | Notifications (patient and professional) | Generated in the browser from appointments; the "read" state is kept in `localStorage` |
 | Accessibility preferences | Stored in `localStorage` (`consultaFacil:preferencias`) |
-| CSV report | Generated in the browser from the appointment list, with `;` as separator and protection against formula injection |
+| Report (.xlsx) | Generated in the browser (`fflate` library) from the appointment list. The .xlsx format avoids broken accents on phones, and cells are plain text, so formulas are never executed |
 | Professional weekly availability | The API stores availability by date. The Mon to Sat grid creates one record on each matching date over the next 4 weeks (`HORIZONTE_DIAS`) |
 | Patient password change | Checks the current password by logging in, then sends the new one through `PUT /pacientes/{id}` |
 
@@ -752,7 +754,7 @@ The JWT lifetime is configured in the back end (8 hours by default, according to
 - In the back-end version analyzed, only the administrators routes and `/auth/perfil` require authentication. The other routes (patients, clinics, professionals, specialties, availability and appointments) respond without a token. This must be addressed in the back end.
 - The token is not stored in `localStorage`, which reduces exposure to malicious scripts, at the cost of requiring a new login after reloading the page.
 - React escapes displayed content by default and the code does not use `dangerouslySetInnerHTML`.
-- CSV reports neutralize cells that start with formula characters.
+- The .xlsx report stores cells as text, so values starting with `=`, `+`, `-` or `@` are not executed as formulas.
 
 ---
 

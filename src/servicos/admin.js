@@ -12,6 +12,7 @@
 // Os campos de resposta quase não são documentados, então as funções "ler..." aceitam nomes comuns.
 // Se algo não aparecer, rode com `npm run dev` e veja no console as respostas cruas "[API] ...".
 
+import { strToU8, zipSync } from 'fflate'
 import { buscar, comoLista, comoObjeto, lerData, lerHora, formatarNomeProfissional } from './profissional'
 import { dataLocal, paraISO } from './datas'
 import { carregarEspecialidades } from './especialidades'
@@ -229,16 +230,9 @@ export function montarAtividades(base, agora = new Date(), limite = 6) {
   })
 }
 
-// ---------- Relatório CSV ----------
+// ---------- Relatório (planilha .xlsx) ----------
 
 export const STATUS_ROTULOS = { AGENDADO: 'Aguardando', CONFIRMADO: 'Confirmado', CANCELADO: 'Cancelado', REALIZADO: 'Realizado' }
-
-// Evita que o Excel execute uma célula que comece com = + - @ (injeção de fórmula)
-function celula(valor) {
-  let texto = String(valor ?? '')
-  if (/^[=+\-@\t\r]/.test(texto)) texto = `'${texto}`
-  return /[";\n\r]/.test(texto) ? `"${texto.replace(/"/g, '""')}"` : texto
-}
 
 function dataBr(iso) {
   return iso ? iso.split('-').reverse().join('/') : ''
@@ -254,35 +248,72 @@ export function periodoPadrao(tipo, hoje = paraISO(new Date())) {
   return { inicio: `${hoje.slice(0, 8)}01`, fim: hoje }
 }
 
-// Devolve { csv, total } com os agendamentos cujo horário cai entre inicio e fim (inclusive).
-export function gerarRelatorioCsv(base, inicio, fim) {
+// Devolve { arquivo, total }: planilha .xlsx (Uint8Array) com os agendamentos cujo horário cai entre inicio e fim.
+// Usamos .xlsx e não CSV porque o CSV depende de o aplicativo adivinhar a codificação: no celular o
+// acento aparecia quebrado ("CÃ³digo"). No .xlsx o texto é sempre UTF-8 e as células são texto puro,
+// então também não existe risco de o Excel executar uma fórmula (= + - @).
+export function gerarRelatorioXlsx(base, inicio, fim) {
   const linhas = montarAgendamentos(base)
     .filter((a) => a.data && a.data >= inicio && a.data <= fim)
     .sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora))
 
   const cabecalho = ['Código', 'Data', 'Hora', 'Status', 'Paciente', 'Profissional', 'Especialidade', 'Clínica', 'Observação']
-  const corpo = linhas.map((a) =>
-    [
-      `AG-${String(a.id).padStart(5, '0')}`,
-      dataBr(a.data),
-      a.hora,
-      STATUS_ROTULOS[a.status] ?? a.status,
-      a.paciente,
-      a.profissional,
-      a.especialidade,
-      a.clinica,
-      a.observacao,
-    ]
-      .map(celula)
-      .join(';')
-  )
+  const corpo = linhas.map((a) => [
+    `AG-${String(a.id).padStart(5, '0')}`,
+    dataBr(a.data),
+    a.hora,
+    STATUS_ROTULOS[a.status] ?? a.status,
+    a.paciente,
+    a.profissional,
+    a.especialidade,
+    a.clinica,
+    a.observacao,
+  ])
 
-  // BOM + ";" + CRLF: abre direto no Excel em português
-  return { csv: '﻿' + [cabecalho.join(';'), ...corpo].join('\r\n') + '\r\n', total: linhas.length }
+  return { arquivo: montarXlsx([cabecalho, ...corpo]), total: linhas.length }
+}
+
+const escaparXml = (v) =>
+  String(v ?? '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+
+function letraDaColuna(i) {
+  return String.fromCharCode(65 + i)
+}
+
+function montarXlsx(matriz) {
+  const linhasXml = matriz
+    .map((linha, r) => {
+      const celulas = linha
+        .map((v, c) => `<c r="${letraDaColuna(c)}${r + 1}" t="inlineStr"${r === 0 ? ' s="1"' : ''}><is><t xml:space="preserve">${escaparXml(v)}</t></is></c>`)
+        .join('')
+      return `<row r="${r + 1}">${celulas}</row>`
+    })
+    .join('')
+  const larguras = [12, 12, 8, 14, 26, 26, 20, 26, 36]
+  const colunas = larguras.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')
+  const cab = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+  const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+  const arquivos = {
+    '[Content_Types].xml': `${cab}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`,
+    '_rels/.rels': `${cab}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
+    'xl/workbook.xml': `${cab}<workbook xmlns="${ns}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Agendamentos" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+    'xl/_rels/workbook.xml.rels': `${cab}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
+    'xl/styles.xml': `${cab}<styleSheet xmlns="${ns}"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`,
+    'xl/worksheets/sheet1.xml': `${cab}<worksheet xmlns="${ns}"><cols>${colunas}</cols><sheetData>${linhasXml}</sheetData></worksheet>`,
+  }
+  const entradas = {}
+  for (const [nome, texto] of Object.entries(arquivos)) entradas[nome] = strToU8(texto)
+  return zipSync(entradas)
 }
 
 export function baixarArquivo(nome, conteudo) {
-  const url = URL.createObjectURL(new Blob([conteudo], { type: 'text/csv;charset=utf-8' }))
+  const tipo = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  const url = URL.createObjectURL(new Blob([conteudo], { type: tipo }))
   const link = document.createElement('a')
   link.href = url
   link.download = nome
@@ -293,5 +324,5 @@ export function baixarArquivo(nome, conteudo) {
 }
 
 export function nomeDoRelatorio(inicio, fim) {
-  return `relatorio-consulta-facil_${inicio}_a_${fim}.csv`
+  return `relatorio-consulta-facil_${inicio}_a_${fim}.xlsx`
 }

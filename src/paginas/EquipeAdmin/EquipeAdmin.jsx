@@ -477,7 +477,7 @@ function EquipeAdmin({ usuario, aoNavegar }) {
         </div>
 
         {estado === 'ok' && (
-          <button type="button" className="clinicas-novo" onClick={abrirCadastro} aria-label="Cadastrar novo profissional">+</button>
+          <button type="button" className="clinicas-novo" onClick={abrirCadastro} aria-label="Cadastrar novo profissional"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></button>
         )}
         <MenuAdmin itemAtivo="equipe" aoNavegar={aoNavegar} menuAberto={menuAberto} aoFecharMenu={() => setMenuAberto(false)} />
       </div>
