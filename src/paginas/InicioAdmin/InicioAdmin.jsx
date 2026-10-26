@@ -3,7 +3,7 @@ import {
   baixarArquivo,
   calcularPainelAdmin,
   carregarBaseAdmin,
-  gerarRelatorioCsv,
+  gerarRelatorioXlsx,
   montarAtividades,
   nomeDoRelatorio,
   periodoPadrao,
@@ -79,10 +79,10 @@ function InicioAdmin({ usuario, aoSair, aoNavegar }) {
       return setErroRelatorio('Não foi possível carregar os agendamentos. Atualize a tela e tente de novo.')
     }
 
-    const { csv, total } = gerarRelatorioCsv(base, periodo.inicio, periodo.fim)
+    const { arquivo, total } = gerarRelatorioXlsx(base, periodo.inicio, periodo.fim)
     if (total === 0) return setErroRelatorio('Não há agendamentos nesse período.')
 
-    baixarArquivo(nomeDoRelatorio(periodo.inicio, periodo.fim), csv)
+    baixarArquivo(nomeDoRelatorio(periodo.inicio, periodo.fim), arquivo)
     setModalAberto(false)
   }
 
@@ -160,7 +160,9 @@ function InicioAdmin({ usuario, aoSair, aoNavegar }) {
               <strong>Relatórios</strong>
               <span>Exporte os dados por período</span>
             </span>
-            <span className="admin-relatorios-baixar" aria-hidden="true">⬇</span>
+            <span className="admin-relatorios-baixar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v11" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
+            </span>
           </button>
 
           <h2 className="admin-titulo-secao admin-titulo-atividade">Atividade recente</h2>
@@ -253,7 +255,7 @@ function InicioAdmin({ usuario, aoSair, aoNavegar }) {
                 <span className="admin-tipo-relatorio-icone" aria-hidden="true">📄</span>
                 <span>
                   <strong>Relatório geral da plataforma</strong>
-                  <span>Arquivo CSV compatível com Excel e Planilhas</span>
+                  <span>Planilha .xlsx compatível com Excel e Planilhas</span>
                 </span>
               </div>
 

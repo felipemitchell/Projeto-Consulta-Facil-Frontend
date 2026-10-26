@@ -204,6 +204,8 @@
 .admin-relatorios-baixar {
   width: 40px;
   height: 40px;
+  min-width: 40px;
+  padding: 0;
   border-radius: 50%;
   background: var(--cor-primaria);
   color: #ffffff;
