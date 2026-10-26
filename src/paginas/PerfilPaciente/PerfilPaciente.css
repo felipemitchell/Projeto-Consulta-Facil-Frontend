@@ -431,3 +431,84 @@
     padding: 40px 56px;
   }
 }
+/* Botão de voltar das notificações */
+.perfil-notificacoes-voltar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 56px;
+  height: 56px;
+  padding: 0;
+
+  background-color: #eff3f7;
+  border: none;
+  border-radius: 50%;
+
+  color: #29384e;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  transition: background-color 0.2s ease;
+}
+
+.perfil-notificacoes-voltar:hover {
+  background-color: #dfe7ef;
+}
+
+.perfil-notificacoes-voltar svg {
+  display: block;
+}
+/* Cabeçalho das notificações */
+.perfil-notificacoes-cabecalho {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: 12px;
+
+  padding: 14px 20px;
+  background-color: #ffffff;
+}
+
+/* Título */
+.perfil-notificacoes-cabecalho h1 {
+  grid-column: 2;
+  grid-row: 1;
+
+  margin: 0;
+  text-align: center;
+
+  font-size: 18px;
+  font-weight: 700;
+  color: #14243e;
+}
+
+/* Botão voltar */
+.perfil-notificacoes-cabecalho .perfil-notificacoes-voltar {
+  grid-column: 1;
+  grid-row: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+  background-color: #eff3f7;
+  color: #29384e;
+
+  cursor: pointer;
+}
+
+.perfil-notificacoes-cabecalho .perfil-notificacoes-voltar svg {
+  width: 20px;
+  height: 20px;
+}
+
+.perfil-notificacoes-cabecalho .perfil-notificacoes-voltar:hover {
+  background-color: #dfe7ef;
+}

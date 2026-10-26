@@ -251,6 +251,7 @@ function PerfilPaciente({
             <header className="perfil-notificacoes-cabecalho">
               <button
                 type="button"
+                className="perfil-notificacoes-voltar"
                 onClick={() => {
                   if (abrirNotificacoesInicialmente) {
                     aoVoltarNotificacoes?.()
@@ -260,7 +261,19 @@ function PerfilPaciente({
                 }}
                 aria-label="Voltar ao perfil"
               >
-                ←
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
               </button>
               <h1>Notificações</h1>
             </header>
@@ -350,9 +363,6 @@ function PerfilPaciente({
               </p>
             )}
 
-            <p className="perfil-paciente-versao">
-              Consulta Fácil v1.0.0 · Secretaria Municipal de Saúde
-            </p>
           </div>
         )}
 
